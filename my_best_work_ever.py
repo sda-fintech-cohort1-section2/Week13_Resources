@@ -74,3 +74,51 @@ def parse_all_fields(year_col, month_col, day_col, hour_col, minute_col, second_
     return parsing.try_parse_datetime_components(
         year_col, month_col, day_col, hour_col, minute_col, second_col
     )
+
+
+
+def generic_parser(parse_func, *cols):
+    """
+    Use dateparser to parse columns with data information into a single datetime column.
+    .. deprecated:: 1.2
+    """
+
+    warnings.warn(
+        """
+        Use pd.to_datetime instead.
+""",
+        FutureWarning,
+        stacklevel=find_stack_level(),
+    )
+
+    N = _check_columns(cols)
+    results = np.empty(N, dtype=object)
+
+    for i in range(N):
+        args = [c[i] for c in cols]
+        results[i] = parse_func(*args)
+
+    return results
+
+
+def _maybe_cast(arr: np.ndarray) -> np.ndarray:
+    if not arr.dtype.type == np.object_:
+        arr = np.array(arr, dtype=object)
+    return arr
+
+
+def _check_columns(cols) -> int:
+    if not len(cols):
+        raise AssertionError("There must be at least 1 column")
+
+    head, tail = cols[0], cols[1:]
+
+    N = len(head)
+
+    for i, n in enumerate(map(len, tail)):
+        if n != N:
+            raise AssertionError(
+                f"All columns must have the same length: {N}; column {i} has length {n}"
+            )
+
+    return N
